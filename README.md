@@ -1,75 +1,20 @@
-# OpenFrame Overview
+Title of Project : Custom Multiply-Accumulate (MAC) instruction for Microwatt POWER CPU 
 
-The OpenFrame Project provides an empty harness chip that differs significantly from the Caravel and Caravan designs. Unlike Caravel and Caravan, which include integrated SoCs and additional features, OpenFrame offers only the essential padframe, providing users with a clean slate for their custom designs.
 
-<img width="256" alt="Screenshot 2024-06-24 at 12 53 39 PM" src="https://github.com/efabless/openframe_timer_example/assets/67271180/ff58b58b-b9c8-4d5e-b9bc-bf344355fa80">
+Project Description :
 
-## Key Characteristics of OpenFrame
+This project extends the Microwatt POWER ISA CPU core with a custom Multiply-Accumulate (MAC) instruction that performs:
+𝑟𝐷 ← (𝑟𝐴 × 𝑟𝐵) + 𝑟𝐶
+in a single instruction. This reduces the instruction sequence length and improves performance for DSP and ML workloads such as FIR filters, dot products, and matrix multiplications. The implementation requires the following key RTL modifications:
 
-1. **Minimalist Design:** 
-   - No integrated SoC or additional circuitry.
-   - Only includes the padframe, a power-on-reset circuit, and a digital ROM containing the 32-bit project ID.
+1.Instruction Encoding – Define a new opcode by selecting an unused slot in the POWER ISA encoding space for the MAC instruction.
+2.Instruction Decode – Extend the decode logic to recognize the new opcode and generate the appropriate control signals for execution.
+3.Pipeline Execution – Modify the execution stage to introduce a fused datapath where the multiplier output is directly combined with an additional operand through the adder, completing the MAC operation in one step.
+4.Result Write-back – Ensure the computed result is correctly written back into the destination register, maintaining consistency with the register file and hazard control logic.
 
-2. **Padframe Compatibility:**
-   - The padframe design and pin placements match those of the Caravel and Caravan chips, ensuring compatibility and ease of transition between designs.
-   - Pin types are identical, with power and ground pins positioned similarly and the same power domains available.
+The new instruction will be validated with simulation testbenches and application-level benchmarks, comparing cycle counts against equivalent multiply–add sequences. This work will demonstrate how Microwatt can be extended for domain-specific acceleration and provides a reusable reference for adding custom instructions in the OpenPOWER ecosystem.
 
-3. **Flexibility:**
-   - Provides full access to all GPIO controls.
-   - Maximizes the user project area, allowing for greater customization and integration of alternative SoCs or user-specific projects at the same hierarchy level.
 
-4. **Simplified I/O:**
-   - Pins that previously connected to CPU functions (e.g., flash controller interface, SPI interface, UART) are now repurposed as general-purpose I/O, offering flexibility for various applications.
+Project Proposal :
 
-The OpenFrame harness is ideal for those looking to implement custom SoCs or integrate user projects without the constraints of an existing SoC.
-
-## Features
-
-1. 44 configurable GPIOs.
-2. User area of approximately 15mm².
-3. Supports digital, analog, or mixed-signal designs.
-
-# openframe_timer_example
-
-This example implements a simple timer and connects it to the GPIOs.
-
-## Installation and Setup
-
-First, clone the repository:
-
-```bash
-git clone https://github.com/efabless/openframe_timer_example.git
-cd openframe_timer_example
-```
-
-Then, download all dependencies:
-
-```bash
-make setup
-```
-
-## Hardening the Design
-
-In this example, we will harden the timer. You will need to harden your own design similarly.
-
-```bash
-make user_proj_timer
-```
-
-Once you have hardened your design, integrate it into the OpenFrame wrapper:
-
-```bash
-make openframe_project_wrapper
-```
-
-## Important Notes
-
-1. **Connecting to Power:**
-   - Ensure your design is connected to power using the power pins on the wrapper.
-   - Use the `vccd1_connection` and `vssd1_connection` macros, which contain the necessary vias and nets for power connections.
-
-2. **Flattening the Design:**
-   - If you plan to flatten your design within the `openframe_project_wrapper`, do not buffer the analog pins using standard cells.
-
-3. **Running Custom Steps:**
-   - Execute the custom step in OpenLane that copies the power pins from the template DEF. If this step is skipped, the precheck will fail, and your design will not be powered.
+This project proposes the design and integration of a Multiply-Accumulate (MAC) instruction into the Microwatt POWER CPU core to enhance support for DSP and machine learning workloads. The new instruction fuses multiplication and addition in a single operation, reducing instruction count and improving execution efficiency for algorithms such as dot products and matrix multiplications. The work includes defining the instruction encoding, extending the pipeline to support fused multiply-add functionality, and validating correctness through simulation and application-level benchmarks. The final outcome will be an open-source, reusable extension that demonstrates the potential of customizing Microwatt for domain-specific acceleration within the OpenPOWER ecosystem.
